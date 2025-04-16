@@ -1,6 +1,6 @@
 const token = localStorage.getItem("token");
 if (!token) {
-  alert("Please login first.");
+  showToast("Please login first.", "danger");
   window.location.href = "login.html";
 }
 
@@ -11,17 +11,17 @@ const categoryFilter = document.getElementById("categoryFilter");
 
 let allTasks = [];
 
-// Fetch Tasks on Load
 window.onload = async () => {
+  showLoader(true);
   const res = await fetch(apiUrl, {
     headers: { Authorization: token }
   });
   allTasks = await res.json();
+  showLoader(false);
   renderTasks(allTasks);
   updateSummary(allTasks);
 };
 
-// Handle New Task Form
 document.getElementById("taskForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = document.getElementById("title").value;
@@ -29,6 +29,7 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   const category = document.getElementById("category").value;
   const dueDate = document.getElementById("dueDate").value;
 
+  showLoader(true);
   const res = await fetch(apiUrl, {
     method: "POST",
     headers: {
@@ -39,17 +40,19 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   });
 
   const newTask = await res.json();
+  showLoader(false);
+
   if (res.ok) {
     allTasks.push(newTask);
     renderTasks(allTasks);
     updateSummary(allTasks);
+    showToast("Task added!", "success");
     e.target.reset();
   } else {
-    alert("Failed to add task");
+    showToast("Failed to add task", "danger");
   }
 });
 
-// Render Tasks
 function renderTasks(tasks) {
   taskList.innerHTML = "";
   const filtered = applySearchAndFilters(tasks);
@@ -76,7 +79,6 @@ function renderTasks(tasks) {
   });
 }
 
-// Summary Counts
 function updateSummary(tasks) {
   const total = tasks.length;
   const completed = tasks.filter(t => t.isCompleted).length;
@@ -87,8 +89,8 @@ function updateSummary(tasks) {
   document.getElementById("pendingCount").textContent = pending;
 }
 
-// Toggle Task Completion
 async function toggleComplete(id, currentStatus) {
+  showLoader(true);
   const res = await fetch(`${apiUrl}/${id}`, {
     method: "PUT",
     headers: {
@@ -99,33 +101,37 @@ async function toggleComplete(id, currentStatus) {
   });
 
   const updatedTask = await res.json();
+  showLoader(false);
+
   if (res.ok) {
     const index = allTasks.findIndex(t => t._id === id);
     allTasks[index] = updatedTask;
     renderTasks(allTasks);
     updateSummary(allTasks);
+    showToast("Task updated!", "success");
   } else {
-    alert("Failed to update task");
+    showToast("Failed to update task", "danger");
   }
 }
 
-// Delete Task
 async function deleteTask(id) {
+  showLoader(true);
   const res = await fetch(`${apiUrl}/${id}`, {
     method: "DELETE",
     headers: { Authorization: token }
   });
+  showLoader(false);
 
   if (res.ok) {
     allTasks = allTasks.filter(t => t._id !== id);
     renderTasks(allTasks);
     updateSummary(allTasks);
+    showToast("Task deleted!", "success");
   } else {
-    alert("Failed to delete task");
+    showToast("Failed to delete task", "danger");
   }
 }
 
-// Filter Buttons (All / Completed / Pending)
 function filterTasks(type) {
   let filtered;
   if (type === "completed") {
@@ -138,11 +144,9 @@ function filterTasks(type) {
   renderTasks(filtered);
 }
 
-// Apply Search & Category Filter Together
 function applySearchAndFilters(tasks) {
   const keyword = searchInput.value.toLowerCase().trim();
   const category = categoryFilter.value;
-
   return tasks.filter(task => {
     const matchesTitle = task.title.toLowerCase().includes(keyword);
     const matchesCategory = category ? task.category === category : true;
@@ -150,26 +154,22 @@ function applySearchAndFilters(tasks) {
   });
 }
 
-// Search Listener
 searchInput.addEventListener("input", () => renderTasks(allTasks));
 categoryFilter.addEventListener("change", () => renderTasks(allTasks));
 
-// Format Date: dd/mm/yyyy
 function formatDate(dateString) {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-GB"); // dd/mm/yyyy
+  return date.toLocaleDateString("en-GB");
 }
 
-// Due Soon Checker (within 3 days)
 function isTaskDueSoon(date) {
   if (!date) return false;
   const now = new Date();
   const due = new Date(date);
-  const diff = (due - now) / (1000 * 60 * 60 * 24); // days
+  const diff = (due - now) / (1000 * 60 * 60 * 24);
   return diff <= 3 && diff >= 0;
 }
 
-// Logout
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
