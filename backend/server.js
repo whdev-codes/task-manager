@@ -1,7 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+
+// Dynamically load the .env file from the project root
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 
@@ -9,9 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes (we'll add later)
- app.use('/api/auth', require('./routes/auth'));
- app.use('/api/tasks', require('./routes/tasks'));
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/tasks', require('./routes/tasks'));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
