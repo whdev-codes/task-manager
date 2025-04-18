@@ -36,6 +36,9 @@ A full-stack task management web application built with **Node.js**, **Express**
 
 ---
 
+🛠️ Note:
+The backend is hosted on Render’s free tier, which may cause an initial delay (up to 50 seconds) when the server spins up after inactivity. During this time, a loading animation will be visible on the UI while the request completes. Subsequent actions will be faster once the backend is active.
+
 🌍 For Live Demo  
 🔗 https://task-manager-git-main-nilabha-pramanicks-projects.vercel.app/
 
