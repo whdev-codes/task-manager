@@ -15,8 +15,7 @@ A full-stack task management web application built with **Node.js**, **Express**
 ✅ Alert for tasks due soon  
 ✅ Summary dashboard (Total / Completed / Pending)  
 ✅ Loading animations and Bootstrap toasts  
-✅ Responsive & professional Bootstrap 5 UI  
-✅ Favicon and logo branding
+✅ Responsive & professional Bootstrap 5 UI
 
 ---
 
