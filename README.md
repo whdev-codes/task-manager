@@ -44,5 +44,4 @@ A full-stack task management web application built with **Node.js**, **Express**
 ```bash
 git clone https://github.com/whdev-codes/task-manager.git
 
-🌍 For Live Demo
-🔗 https://task-manager-git-main-nilabha-pramanicks-projects.vercel.app/
+🌍 **Live Demo** → [Click here to open the app](https://task-manager-git-main-nilabha-pramanicks-projects.vercel.app)
