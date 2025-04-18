@@ -185,8 +185,8 @@ const baseUrl = window.location.hostname.includes("localhost")
   : "https://task-manager-backend-3sq9.onrender.com";
 
 const apiUrl = `${baseUrl}/api/tasks`;
-
 const token = localStorage.getItem("token");
+
 if (!token) {
   showToast("Please login first.", "danger");
   window.location.href = "login.html";
@@ -200,13 +200,18 @@ let allTasks = [];
 
 window.onload = async () => {
   showLoader(true);
-  const res = await fetch(apiUrl, {
-    headers: { Authorization: token }
-  });
-  allTasks = await res.json();
-  showLoader(false);
-  renderTasks(allTasks);
-  updateSummary(allTasks);
+  try {
+    const res = await fetch(apiUrl, {
+      headers: { Authorization: token }
+    });
+    allTasks = await res.json();
+    renderTasks(allTasks);
+    updateSummary(allTasks);
+  } catch (err) {
+    showToast("Failed to load tasks", "danger");
+  } finally {
+    showLoader(false);
+  }
 };
 
 document.getElementById("taskForm").addEventListener("submit", async (e) => {
@@ -214,15 +219,15 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   const title = document.getElementById("title").value;
   const priority = document.getElementById("priority").value;
   const category = document.getElementById("category").value;
-  
   const rawDate = document.getElementById("dueDate").value;
+
   let dueDate = null;
 
   if (rawDate) {
-    const parts = rawDate.split("/"); // expects dd/mm/yyyy
+    const parts = rawDate.split("/");
     if (parts.length === 3) {
       const [day, month, year] = parts;
-      const formatted = `${year}-${month}-${day}`; // yyyy-mm-dd
+      const formatted = `${year}-${month}-${day}`;
       const parsedDate = new Date(formatted);
 
       if (!isNaN(parsedDate)) {
@@ -238,27 +243,31 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   }
 
   showLoader(true);
-  const res = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token
-    },
-    body: JSON.stringify({ title, priority, category, dueDate })
-  });
+  try {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token
+      },
+      body: JSON.stringify({ title, priority, category, dueDate })
+    });
 
-  const newTask = await res.json();
-  console.log("Add task response:", res.status, newTask);
-  showLoader(false);
-
-  if (res.ok) {
-    allTasks.push(newTask);
-    renderTasks(allTasks);
-    updateSummary(allTasks);
-    showToast("Task added!", "success");
-    e.target.reset();
-  } else {
+    const newTask = await res.json();
+    console.log("Add task response:", res.status, newTask);
+    if (res.ok) {
+      allTasks.push(newTask);
+      renderTasks(allTasks);
+      updateSummary(allTasks);
+      showToast("Task added!", "success");
+      e.target.reset();
+    } else {
+      showToast(newTask.message || "Failed to add task", "danger");
+    }
+  } catch (err) {
     showToast("Failed to add task", "danger");
+  } finally {
+    showLoader(false);
   }
 });
 
@@ -274,13 +283,14 @@ function renderTasks(tasks) {
     li.className = `list-group-item d-flex justify-content-between align-items-center ${isDueSoon && !task.isCompleted ? 'border-start border-5 border-warning' : ''}`;
     li.innerHTML = `
       <div>
-        <strong>${task.title}</strong>
-        <br/>
+        <strong>${task.title}</strong><br/>
         <small class="text-muted">${task.priority} | ${task.category || 'No Category'} | ${dueDateFormatted}</small><br>
         ${task.isCompleted ? '<span class="badge bg-success">Completed</span>' : ''}
       </div>
       <div>
-        <button class="btn btn-sm btn-outline-success me-2" onclick="toggleComplete('${task._id}', ${task.isCompleted})">${task.isCompleted ? 'Undo' : 'Complete'}</button>
+        <button class="btn btn-sm btn-outline-success me-2" onclick="toggleComplete('${task._id}', ${task.isCompleted})">
+          ${task.isCompleted ? 'Undo' : 'Complete'}
+        </button>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteTask('${task._id}')">Delete</button>
       </div>
     `;
@@ -300,44 +310,53 @@ function updateSummary(tasks) {
 
 async function toggleComplete(id, currentStatus) {
   showLoader(true);
-  const res = await fetch(`${apiUrl}/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token
-    },
-    body: JSON.stringify({ isCompleted: !currentStatus })
-  });
+  try {
+    const res = await fetch(`${apiUrl}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token
+      },
+      body: JSON.stringify({ isCompleted: !currentStatus })
+    });
 
-  const updatedTask = await res.json();
-  showLoader(false);
-
-  if (res.ok) {
-    const index = allTasks.findIndex(t => t._id === id);
-    allTasks[index] = updatedTask;
-    renderTasks(allTasks);
-    updateSummary(allTasks);
-    showToast("Task updated!", "success");
-  } else {
-    showToast("Failed to update task", "danger");
+    const updatedTask = await res.json();
+    if (res.ok) {
+      const index = allTasks.findIndex(t => t._id === id);
+      allTasks[index] = updatedTask;
+      renderTasks(allTasks);
+      updateSummary(allTasks);
+      showToast("Task updated!", "success");
+    } else {
+      showToast("Failed to update task", "danger");
+    }
+  } catch (err) {
+    showToast("Error updating task", "danger");
+  } finally {
+    showLoader(false);
   }
 }
 
 async function deleteTask(id) {
   showLoader(true);
-  const res = await fetch(`${apiUrl}/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: token }
-  });
-  showLoader(false);
+  try {
+    const res = await fetch(`${apiUrl}/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: token }
+    });
 
-  if (res.ok) {
-    allTasks = allTasks.filter(t => t._id !== id);
-    renderTasks(allTasks);
-    updateSummary(allTasks);
-    showToast("Task deleted!", "success");
-  } else {
-    showToast("Failed to delete task", "danger");
+    if (res.ok) {
+      allTasks = allTasks.filter(t => t._id !== id);
+      renderTasks(allTasks);
+      updateSummary(allTasks);
+      showToast("Task deleted!", "success");
+    } else {
+      showToast("Failed to delete task", "danger");
+    }
+  } catch (err) {
+    showToast("Error deleting task", "danger");
+  } finally {
+    showLoader(false);
   }
 }
 
@@ -354,8 +373,9 @@ function filterTasks(type) {
 }
 
 function applySearchAndFilters(tasks) {
-  const keyword = searchInput.value.toLowerCase().trim();
-  const category = categoryFilter.value;
+  const keyword = searchInput?.value?.toLowerCase()?.trim() || "";
+  const category = categoryFilter?.value || "";
+
   return tasks.filter(task => {
     const matchesTitle = task.title.toLowerCase().includes(keyword);
     const matchesCategory = category ? task.category === category : true;
@@ -363,8 +383,13 @@ function applySearchAndFilters(tasks) {
   });
 }
 
-searchInput.addEventListener("input", () => renderTasks(allTasks));
-categoryFilter.addEventListener("change", () => renderTasks(allTasks));
+if (searchInput) {
+  searchInput.addEventListener("input", () => renderTasks(allTasks));
+}
+
+if (categoryFilter) {
+  categoryFilter.addEventListener("change", () => renderTasks(allTasks));
+}
 
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -384,3 +409,4 @@ function logout() {
   localStorage.removeItem("user");
   window.location.href = "login.html";
 }
+
