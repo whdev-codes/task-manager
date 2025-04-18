@@ -214,7 +214,8 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   const title = document.getElementById("title").value;
   const priority = document.getElementById("priority").value;
   const category = document.getElementById("category").value;
-  const dueDate = document.getElementById("dueDate").value;
+  const rawDate = document.getElementById("dueDate").value; // "yyyy-mm-dd"
+  const dueDate = rawDate ? new Date(rawDate).toISOString() : null;
 
   showLoader(true);
   const res = await fetch(apiUrl, {
