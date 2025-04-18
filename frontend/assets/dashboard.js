@@ -214,8 +214,19 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   const title = document.getElementById("title").value;
   const priority = document.getElementById("priority").value;
   const category = document.getElementById("category").value;
-  const rawDate = document.getElementById("dueDate").value; // "yyyy-mm-dd"
-  const dueDate = rawDate ? new Date(rawDate).toISOString() : null;
+  
+  let dueDate = null;
+  const rawDate = document.getElementById("dueDate").value;
+
+  if (rawDate) {
+    const parsedDate = new Date(rawDate);
+    if (!isNaN(parsedDate)) {
+      dueDate = parsedDate.toISOString();
+    } else {
+      showToast("Invalid date format", "danger");
+      return;
+    }
+  }
 
   showLoader(true);
   const res = await fetch(apiUrl, {
