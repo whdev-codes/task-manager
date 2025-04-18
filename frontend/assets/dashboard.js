@@ -227,7 +227,7 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   });
 
   const newTask = await res.json();
-  console.log("Add task response:", res.status, data);
+  console.log("Add task response:", res.status, newTask);
   showLoader(false);
 
   if (res.ok) {
