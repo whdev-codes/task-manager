@@ -215,13 +215,22 @@ document.getElementById("taskForm").addEventListener("submit", async (e) => {
   const priority = document.getElementById("priority").value;
   const category = document.getElementById("category").value;
   
-  let dueDate = null;
   const rawDate = document.getElementById("dueDate").value;
+  let dueDate = null;
 
   if (rawDate) {
-    const parsedDate = new Date(rawDate);
-    if (!isNaN(parsedDate)) {
-      dueDate = parsedDate.toISOString();
+    const parts = rawDate.split("/"); // expects dd/mm/yyyy
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const formatted = `${year}-${month}-${day}`; // yyyy-mm-dd
+      const parsedDate = new Date(formatted);
+
+      if (!isNaN(parsedDate)) {
+        dueDate = parsedDate.toISOString();
+      } else {
+        showToast("Invalid date format", "danger");
+        return;
+      }
     } else {
       showToast("Invalid date format", "danger");
       return;
